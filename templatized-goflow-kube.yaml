@@ -1,0 +1,113 @@
+﻿apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: goflow2-kube-template
+objects:
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: goflow-kube
+      name: goflow-kube
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: goflow-kube
+      template:
+        metadata:
+          labels:
+            app: goflow-kube
+        spec:
+          volumes:
+            - name: config-vol
+              configMap:
+                name: goflow-kube-config
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - /goflow-kube -loglevel "info" -config /etc/goflow-kube/config.yaml
+              image: quay.io/netobserv/goflow2-kube:latest
+              imagePullPolicy: IfNotPresent
+              name: goflow-kube
+              resources:
+                limits:
+                  memory: 512Mi
+                  cpu: "1"
+              volumeMounts:
+                  - mountPath: /etc/goflow-kube
+                    name: config-vol
+          serviceAccountName: goflow-kube
+  
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: goflow-kube
+      labels:
+        app: goflow-kube
+    spec:
+      ports:
+        - port: 2055
+          protocol: UDP
+      selector:
+        app: goflow-kube
+  
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: goflow-kube-config
+    data:
+      config.yaml: |
+        listen: netflow://:2055
+        loki:
+          labels:
+            - SrcNamespace
+            - SrcWorkload
+            - DstNamespace
+            - DstWorkload
+          ignoreList:
+            - NextHop
+            - NextHopAS
+        printOutput: true
+  
+  - apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      labels:
+        app: goflow-kube
+      name: goflow-kube
+  
+  - apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      labels:
+        app: goflow-kube
+      name: goflow-kube
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: goflow-kube
+    subjects:
+      - kind: ServiceAccount
+        name: goflow-kube
+  
+  - apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      labels:
+        app: goflow-kube
+      name: goflow-kube
+    rules:
+      - apiGroups:
+          - ""
+          - "apps"
+        resources:
+          - pods
+          - replicasets
+          - services
+        verbs:
+          - list
+          - get
+          - watch
+
