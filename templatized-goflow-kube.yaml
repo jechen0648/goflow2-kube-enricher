@@ -114,4 +114,5 @@ objects:
           - list
           - get
           - watch
-
+parameters:
+  - name: ns
