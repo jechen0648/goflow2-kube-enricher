@@ -9,7 +9,7 @@ objects:
       labels:
         app: goflow-kube
       name: goflow-kube
-      namespace: "${ns}"
+      namespace: "${NAMESPACE}"
     spec:
       replicas: 1
       selector:
@@ -45,7 +45,7 @@ objects:
     kind: Service
     metadata:
       name: goflow-kube
-      namespace: "${ns}"
+      namespace: "${NAMESPACE}"
       labels:
         app: goflow-kube
     spec:
@@ -79,7 +79,7 @@ objects:
       labels:
         app: goflow-kube
       name: goflow-kube
-      namespace: "${ns}"
+      namespace: "${NAMESPACE}"
   
   - apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
@@ -94,7 +94,7 @@ objects:
     subjects:
       - kind: ServiceAccount
         name: goflow-kube
-        namespace: "${ns}"
+        namespace: "${NAMESPACE}"
   
   - apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
@@ -115,4 +115,4 @@ objects:
           - get
           - watch
 parameters:
-  - name: ns
+  - name: NAMESPACE
